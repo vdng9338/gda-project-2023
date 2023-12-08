@@ -25,3 +25,9 @@ def normal_space_base(q: NDArray) -> NDArray:
         ei = np.tile(ei, (T, 1))
         ret[i] = (q[:,i]/np.linalg.norm(q, axis=-1))[:,np.newaxis]*q + (np.linalg.norm(q, axis=-1))[:,np.newaxis] * ei
     return ret
+
+def SRV(beta: NDArray) -> NDArray:
+    k = beta.shape[0]-1
+    der_beta = k*(beta[1:] - beta[:-1])
+    sqrt_norm_der_beta = np.linalg.norm(der_beta, axis=-1)**.5
+    return der_beta/sqrt_norm_der_beta
