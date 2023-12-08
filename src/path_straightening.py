@@ -62,6 +62,7 @@ def proj_Tq_Cc(w: NDArray, q: NDArray) -> NDArray:
     n = w.shape[1]
     print(f'Norm of w: {utils.norm(w)}')
     Nq_base = utils.normal_space_base(q)
+    # TODO BIG PROBLEM HERE!!
     # TODO Do we want to consider q in the base of the normal space? (Eqn. 1 in the paper)
     for i in range(n):
         w -= utils.inner(Nq_base[i], w) * Nq_base[i]
