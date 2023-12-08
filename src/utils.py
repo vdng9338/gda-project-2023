@@ -1,8 +1,15 @@
 import numpy as np
 from numpy.typing import NDArray
 
+def inner(x: NDArray, y: NDArray):
+    """Inner product of paths or vector fields x and y, both of which have shape (T+1, n).
+
+    The integral is computed using the points at the left of the discretization
+    intervals, hence the last points of the input paths are ignored."""
+    return np.average(np.inner(x[:-1], y[:-1]))
+
 def squared_norm(q: NDArray) -> float:
-    return np.average(np.inner(q, q))
+    return inner(q, q)
 
 def norm(q: NDArray) -> float:
     return squared_norm(q)**.5

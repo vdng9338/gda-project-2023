@@ -10,6 +10,6 @@ We will use the following notations in this page:
 
 The types that we use are as follows:
 
-- Curves, SRV representations, tangent vectors at curves (functions from $[0, 1]$ to $\mathbb{R}^n$, discretized): `numpy.ndarray` of shape `(T, n)`.
-- Paths, vector fields along paths (functions from $[0, 1]$ to functions from $[0, 1]$ to $\mathbb{R}^n$): `numpy.ndarray` of shape `(k, T, n)`.
-- Orthonormal basis of $N_q(\mathcal{C}^c)$: `numpy.ndarray` of shape `(n, T, n)`.
+- Curves, SRV representations, tangent vectors at curves (functions from $[0, 1]$ to $\mathbb{R}^n$, discretized): `numpy.ndarray` of shape `(T+1, n)`.
+- Paths, vector fields along paths (functions from $[0, 1]$ to functions from $[0, 1]$ to $\mathbb{R}^n$): `numpy.ndarray` of shape `(k+1, T+1, n)`.
+- Orthonormal basis of $N_q(\mathcal{C}^c)$: `numpy.ndarray` of shape `(n, T+1, n)`.
