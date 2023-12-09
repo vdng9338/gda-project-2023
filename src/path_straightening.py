@@ -1,7 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
 import utils
-from math import isnan
 
 def proj_Co(q: NDArray):
     return q/utils.norm(q)
@@ -16,7 +15,7 @@ def jacobian_G(q: NDArray):
     mat = 3*integ + np.eye(n)
     return mat
 
-def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-6):
+def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-8):
     """Project an SRV representation of a curve in C^o (open curve) to C^c (closed curves).
 
     Parameters
@@ -30,23 +29,15 @@ def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-6):
     eps: float
         Stopping threshold.
     """
-    #utils.plot(q, title="Before projection onto $\mathcal{C}^o$")
     q = proj_Co(q)
-    #utils.plot(q, title="After projection onto $\mathcal{C}^o$")
     while True:
         J = jacobian_G(q)
         r = G(q)
         beta = np.linalg.solve(J, -r)
-        """print(f"Jacobian: {J}")
-        print(f"Residual G(q): {r}")
-        print(f"Solution to Jbeta = -r: {beta}")"""
         Nq_base = utils.normal_space_base(q, False)
         q += delta*np.sum(beta[:,np.newaxis,np.newaxis]*Nq_base, axis=0)
         q /= utils.norm(q)
         newres = G(q)
-        if isnan(np.inner(newres, newres)):
-            raise SystemExit
-        #print(f'New residual squared norm: {np.inner(newres, newres)}')
         if np.inner(newres, newres) < eps:
             return q
 
@@ -64,19 +55,11 @@ def proj_Tq_Cc(w: NDArray, q: NDArray) -> NDArray:
     -------
     proj: NDArray of shape (T+1, n)
         The projection of w into T_q(C^c)."""
-    #print(f'Projecting w to tangent space')
     n = w.shape[1]
-    #print(f'Norm of w: {utils.norm(w)}')
     Nq_base = utils.normal_space_base(q, True)
-    #utils.plot_path_animation(Nq_base, interval=500, title="Normal space base")
-    # TODO BIG PROBLEM HERE!!
     # TODO Do we want to consider q in the base of the normal space? (Eqn. 1 in the paper)
     for i in range(n):
         w = w - utils.inner(Nq_base[i], w) * Nq_base[i]
-    #print(f'Norm of projected w: {utils.norm(w)}')
-    #print(f'Sanity check:')
-    #for i in range(n):
-    #    print(f'<b_{i}, w> = {utils.inner(Nq_base[i], w)}')
     return w
 
 def differentiate_path(alpha: NDArray) -> NDArray:
@@ -91,13 +74,9 @@ def differentiate_path(alpha: NDArray) -> NDArray:
 def covariant_integral(der_alpha: NDArray, alpha: NDArray) -> NDArray:
     k = der_alpha.shape[0]-1
     u = np.zeros_like(der_alpha)
-    #utils.plot_path_animation(der_alpha, title="$\\frac{d\\alpha}{d\\tau}$")
     # u[0] is already zero
     for tau in range(1, k+1):
-        #print(f"Before projection to Tq(Cc) tau={tau}")
         u_proj = proj_Tq_Cc(u[tau-1], alpha[tau])
-        #print("After projection to Tq(Cc).")
-        #print(f'Norm of u_proj: {utils.norm(u_proj)}, norm of u[tau-1]: {utils.norm(u[tau-1])}')
         if utils.norm(u_proj) > 1e-50:
             u_parallel = u_proj * utils.norm(u[tau-1]) / utils.norm(u_proj)
         else:
@@ -122,7 +101,7 @@ def grad_E_H0(u, tilde_u):
         w[tau] -= (tau/k)*tilde_u[tau]
     return w
 
-def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-3, iter_num: int = 0) -> NDArray:
+def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-1, iter_num: int = 0) -> NDArray:
     # scale = pow(0.5, iter_num/10)
     scale = 1
     scaled_eps = eps * scale
@@ -130,21 +109,19 @@ def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-3, iter_num: in
     for tau in range(k+1):
         alpha_prime = alpha[tau] - scaled_eps*w[tau]
         alpha[tau] = proj_Cc(alpha_prime)
-        #alpha[tau] = alpha_prime
 
 def energy(der_alpha: NDArray) -> float:
     return np.tensordot(der_alpha, der_alpha, 3) / der_alpha.shape[0] / der_alpha.shape[1] / 2
 
-def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-4):
+def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-6):
     q_0 = utils.SRV(beta_0)
     q_1 = utils.SRV(beta_1)
     q_0 /= utils.norm(q_0)
     q_1 /= utils.norm(q_1)
-    """print(f"Norm of q_0: {utils.norm(q_0)}")
-    print(f"Norm of q_1: {utils.norm(q_1)}")
-    print(f"Inner product of q_0 and q_1: {utils.inner(q_0, q_1)}")"""
     theta = np.arccos(utils.inner(q_0, q_1))
     taus = np.linspace(0.0, 1.0, k+1)[:,np.newaxis,np.newaxis]
+    # Start with a wildly suboptimal path to show the effects of path straightening
+    taus = 4*taus**2 - 3*taus # a polynomial P of degree two such that P(0)=0, P(1)=1, P(1/4)=-1/2
     alpha = 1/np.sin(theta)*(np.sin(theta*(1-taus)) * q_0 + np.sin(theta*taus) * q_1)
     utils.plot_path_animation(alpha, True, title="Path in $\mathcal{C}^o$")
     for tau in range(k+1):
@@ -153,24 +130,19 @@ def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-4):
     num_iterations = 0
     while True:
         der_alpha = differentiate_path(alpha)
-        #print("Alpha differentiated")
         u = covariant_integral(der_alpha, alpha)
-        #print("u computed")
-        #utils.plot_path_animation(u[:30])
         tilde_u = backward_parallel_transport(u, alpha)
-        #print("tilde_u computed")
         w = grad_E_H0(u, tilde_u)
-        #print("Gradient computed")
         gradient_descent(alpha, w, iter_num=num_iterations)
         if num_iterations % 100 == 1:
             utils.plot_path_animation(alpha, True, title=f"Iteration #{num_iterations}")
         num_iterations+=1
         criterion = np.tensordot(w, w, 3)/w.shape[0]/w.shape[1]
-        if num_iterations == 1 or not(num_iterations % 100):
+        if num_iterations == 1 or not(num_iterations % 10):
             energ = energy(der_alpha)
             print(f"Iter: {num_iterations}")
-            print(f"Energy: {energ:.2f}")
-            print(f"Sum of <w(tau), w(tau)>: {criterion:.2f}")
+            print(f"Energy: {energ:.5f}")
+            print(f"Sum of <w(tau), w(tau)>: {criterion:.5f}")
         #if np.sum([utils.norm(w[tau]) for tau in range(k+1)]) <= eps_2:
         if criterion <= eps_2:
             return alpha

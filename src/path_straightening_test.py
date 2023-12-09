@@ -19,15 +19,15 @@ def gen_ellipse(a: float, b: float, T: int) -> NDArray:
     return np.stack((a*np.cos(thetas), b*np.sin(thetas)), axis=-1)
     
 def main():
-    if len(sys.argv) < 3:
-        print(f"Usage: python3 {sys.argv[0]} <shape1.json> <shape2.json>")
-        sys.exit(1)
     T = 100
     k = 100
-    """ellipse = gen_ellipse(a = 2.0, b = 0.5, T = T)
-    circle = gen_ellipse(a = 1.0, b = 1.0, T = T)"""
-    shape1 = utils.load_path(sys.argv[1], discretization_steps=T)
-    shape2 = utils.load_path(sys.argv[2], discretization_steps=T)
+    if len(sys.argv) < 3:
+        print(f"Usage for arbitrary shapes: python3 {sys.argv[0]} <shape1.json> <shape2.json>")
+        shape1 = gen_ellipse(a = 2.0, b = 0.5, T = T)
+        shape2 = gen_ellipse(a = 1.0, b = 1.0, T = T)
+    else:
+        shape1 = utils.load_path(sys.argv[1], discretization_steps=T)
+        shape2 = utils.load_path(sys.argv[2], discretization_steps=T)
     plt.plot(shape1[:,0], shape1[:,1])
     plt.plot(shape2[:,0], shape2[:,1])
     plt.axis('equal')
