@@ -40,7 +40,7 @@ def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-6):
         """print(f"Jacobian: {J}")
         print(f"Residual G(q): {r}")
         print(f"Solution to Jbeta = -r: {beta}")"""
-        Nq_base = utils.normal_space_base(q)
+        Nq_base = utils.normal_space_base(q, False)
         q += delta*np.sum(beta[:,np.newaxis,np.newaxis]*Nq_base, axis=0)
         q /= utils.norm(q)
         newres = G(q)
@@ -48,7 +48,7 @@ def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-6):
             raise SystemExit
         #print(f'New residual squared norm: {np.inner(newres, newres)}')
         if np.inner(newres, newres) < eps:
-            return q/utils.norm(q)
+            return q
 
 def proj_Tq_Cc(w: NDArray, q: NDArray) -> NDArray:
     """
@@ -67,13 +67,16 @@ def proj_Tq_Cc(w: NDArray, q: NDArray) -> NDArray:
     #print(f'Projecting w to tangent space')
     n = w.shape[1]
     #print(f'Norm of w: {utils.norm(w)}')
-    Nq_base = utils.normal_space_base(q)
+    Nq_base = utils.normal_space_base(q, True)
     #utils.plot_path_animation(Nq_base, interval=500, title="Normal space base")
     # TODO BIG PROBLEM HERE!!
     # TODO Do we want to consider q in the base of the normal space? (Eqn. 1 in the paper)
     for i in range(n):
         w = w - utils.inner(Nq_base[i], w) * Nq_base[i]
     #print(f'Norm of projected w: {utils.norm(w)}')
+    #print(f'Sanity check:')
+    #for i in range(n):
+    #    print(f'<b_{i}, w> = {utils.inner(Nq_base[i], w)}')
     return w
 
 def differentiate_path(alpha: NDArray) -> NDArray:
@@ -119,7 +122,7 @@ def grad_E_H0(u, tilde_u):
         w[tau] -= (tau/k)*tilde_u[tau]
     return w
 
-def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-4, iter_num: int = 0) -> NDArray:
+def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-3, iter_num: int = 0) -> NDArray:
     # scale = pow(0.5, iter_num/10)
     scale = 1
     scaled_eps = eps * scale
@@ -127,11 +130,12 @@ def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-4, iter_num: in
     for tau in range(k+1):
         alpha_prime = alpha[tau] - scaled_eps*w[tau]
         alpha[tau] = proj_Cc(alpha_prime)
+        #alpha[tau] = alpha_prime
 
 def energy(der_alpha: NDArray) -> float:
     return np.tensordot(der_alpha, der_alpha, 3) / der_alpha.shape[0] / der_alpha.shape[1] / 2
 
-def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-1):
+def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-4):
     q_0 = utils.SRV(beta_0)
     q_1 = utils.SRV(beta_1)
     q_0 /= utils.norm(q_0)

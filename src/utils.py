@@ -11,7 +11,7 @@ def inner(x: NDArray, y: NDArray):
     The integral is computed using the points at the left of the discretization
     intervals, hence the last points of the input paths are ignored."""
     # Renormalize because indices are in [0,...T] instead of [0, ..., 1]
-    return np.tensordot(x[:-1], y[:-1]) / (x.shape[0]**2)
+    return np.tensordot(x[:-1], y[:-1]) / (x.shape[0])
 
 def squared_norm(q: NDArray) -> float:
     return inner(q, q)
@@ -19,7 +19,7 @@ def squared_norm(q: NDArray) -> float:
 def norm(q: NDArray) -> float:
     return squared_norm(q)**.5
 
-def normal_space_base(q: NDArray) -> NDArray:
+def normal_space_base(q: NDArray, orthonormalize: bool) -> NDArray:
     # Naively
     n = q.shape[1]
     T = q.shape[0]
@@ -29,6 +29,12 @@ def normal_space_base(q: NDArray) -> NDArray:
         ei[i] = 1.0
         ei = np.tile(ei, (T, 1))
         ret[i] = (q[:,i]/np.linalg.norm(q, axis=-1))[:,np.newaxis]*q + (np.linalg.norm(q, axis=-1))[:,np.newaxis] * ei
+    # Orthonormalize it
+    if orthonormalize:
+        for i in range(n):
+            for j in range(i-1):
+                ret[i] -= inner(ret[j], ret[i])*ret[j]
+            ret[i] /= norm(ret[i])
     return ret
 
 def SRV(beta: NDArray) -> NDArray:
@@ -72,8 +78,12 @@ def plot_path_animation(path, convert_from_SRV=False, interval=50, title=None):
 
 def load_path(filename: str, discretization_steps: int = 100):
     f = open(filename, 'r')
-    points = np.array(json.load(f))
+    points = json.load(f)
     f.close()
+    if points[-1] != points[0]:
+        print(f"Warning: Input path in file {filename} is not closed, closing")
+        points.append(points[0])
+    points = np.array(points)
     ret = np.zeros((discretization_steps, points.shape[1]))
     for i in range(discretization_steps):
         pos = i/(discretization_steps-1)*(len(points)-1)
