@@ -124,6 +124,9 @@ def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-1) -> NDArray:
         alpha_prime = alpha[tau] - eps*w[tau]
         alpha[tau] = proj_Cc(alpha_prime)
 
+def energy(der_alpha: NDArray) -> float:
+    return 1/2*np.average(np.sum(der_alpha[:,:-1] * der_alpha[:,:-1], axis=-1))
+
 def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-1):
     q_0 = utils.SRV(beta_0)
     q_1 = utils.SRV(beta_1)
@@ -154,6 +157,11 @@ def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-1):
         if num_iterations % 10 == 1:
             utils.plot_path_animation(alpha, True, title=f"Iteration #{num_iterations}")
         num_iterations+=1
-        if np.sum([utils.norm(w[tau]) for tau in range(k+1)]) <= eps_2:
+        energ = energy(differentiate_path(alpha))
+        criterion = np.sum(np.average(np.sum(w[:,:-1]*w[:,:-1], axis=-1), axis=-1))
+        print("Energy:", energ)
+        print("Sum of <w(tau), w(tau)>:", criterion)
+        #if np.sum([utils.norm(w[tau]) for tau in range(k+1)]) <= eps_2:
+        if criterion <= eps_2:
             return alpha
 
