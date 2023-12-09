@@ -10,7 +10,8 @@ def inner(x: NDArray, y: NDArray):
 
     The integral is computed using the points at the left of the discretization
     intervals, hence the last points of the input paths are ignored."""
-    return np.average((x[:-1] * y[:-1]).sum(axis=-1))
+    # Renormalize because indices are in [0,...T] instead of [0, ..., 1]
+    return np.tensordot(x[:-1], y[:-1]) / (x.shape[0]**2)
 
 def squared_norm(q: NDArray) -> float:
     return inner(q, q)
@@ -43,8 +44,8 @@ def SRV_to_orig(q: NDArray, beta0: NDArray = None) -> NDArray:
         beta0 = np.zeros(n)
     beta = np.zeros((T+1, n))
     beta[0] = beta0
-    for t in range(T):
-        beta[t+1] = beta[t] + 1/T*np.linalg.norm(q[t])*q[t]
+    beta[1:] = np.linalg.norm(q, axis=-1, keepdims=True)*q
+    beta = np.cumsum(beta, axis=0) / T
     return beta
 
 def plot(q, title=None):

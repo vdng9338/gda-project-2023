@@ -8,14 +8,15 @@ def proj_Co(q: NDArray):
 
 def G(q: NDArray):
     norm_q_t = np.linalg.norm(q, axis=-1)
-    return np.average(q * norm_q_t[:,np.newaxis], axis=0)
+    return np.einsum('tn,t->n', q, norm_q_t) / q.shape[0]
 
 def jacobian_G(q: NDArray):
     n = q.shape[1]
-    mat = np.average(3*q[:,:,np.newaxis]*q[:,np.newaxis,:], axis=0) + np.eye(n)
+    integ = np.einsum("ti, tj -> ij", q, q) / q.shape[0]
+    mat = 3*integ + np.eye(n)
     return mat
 
-def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-4):
+def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-6):
     """Project an SRV representation of a curve in C^o (open curve) to C^c (closed curves).
 
     Parameters
@@ -40,13 +41,13 @@ def proj_Cc(q: NDArray, delta: float = 1e-1, eps: float = 1e-4):
         print(f"Residual G(q): {r}")
         print(f"Solution to Jbeta = -r: {beta}")"""
         Nq_base = utils.normal_space_base(q)
-        q = q + delta*np.sum(beta[:,np.newaxis,np.newaxis]*Nq_base, axis=0)
+        q += delta*np.sum(beta[:,np.newaxis,np.newaxis]*Nq_base, axis=0)
         q /= utils.norm(q)
         newres = G(q)
         if isnan(np.inner(newres, newres)):
             raise SystemExit
         #print(f'New residual squared norm: {np.inner(newres, newres)}')
-        if np.inner(newres, newres) < eps**2:
+        if np.inner(newres, newres) < eps:
             return q/utils.norm(q)
 
 def proj_Tq_Cc(w: NDArray, q: NDArray) -> NDArray:
@@ -112,20 +113,23 @@ def backward_parallel_transport(u: NDArray, alpha: NDArray) -> NDArray:
     return tilde_u
 
 def grad_E_H0(u, tilde_u):
-    w = np.zeros_like(u)
+    w = u.copy()
     k = u.shape[0]-1
     for tau in range(k+1):
-        w[tau] = u[tau] - tau/k*tilde_u[tau]
+        w[tau] -= (tau/k)*tilde_u[tau]
     return w
 
-def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-1) -> NDArray:
+def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-4, iter_num: int = 0) -> NDArray:
+    # scale = pow(0.5, iter_num/10)
+    scale = 1
+    scaled_eps = eps * scale
     k = alpha.shape[0]-1
     for tau in range(k+1):
-        alpha_prime = alpha[tau] - eps*w[tau]
+        alpha_prime = alpha[tau] - scaled_eps*w[tau]
         alpha[tau] = proj_Cc(alpha_prime)
 
 def energy(der_alpha: NDArray) -> float:
-    return 1/2*np.average(np.sum(der_alpha[:,:-1] * der_alpha[:,:-1], axis=-1))
+    return np.tensordot(der_alpha, der_alpha, 3) / der_alpha.shape[0] / der_alpha.shape[1] / 2
 
 def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-1):
     q_0 = utils.SRV(beta_0)
@@ -153,14 +157,16 @@ def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-1):
         #print("tilde_u computed")
         w = grad_E_H0(u, tilde_u)
         #print("Gradient computed")
-        gradient_descent(alpha, w)
-        if num_iterations % 10 == 1:
+        gradient_descent(alpha, w, iter_num=num_iterations)
+        if num_iterations % 100 == 1:
             utils.plot_path_animation(alpha, True, title=f"Iteration #{num_iterations}")
         num_iterations+=1
-        energ = energy(differentiate_path(alpha))
-        criterion = np.sum(np.average(np.sum(w[:,:-1]*w[:,:-1], axis=-1), axis=-1))
-        print("Energy:", energ)
-        print("Sum of <w(tau), w(tau)>:", criterion)
+        criterion = np.tensordot(w, w, 3)/w.shape[0]/w.shape[1]
+        if num_iterations == 1 or not(num_iterations % 100):
+            energ = energy(der_alpha)
+            print(f"Iter: {num_iterations}")
+            print(f"Energy: {energ:.2f}")
+            print(f"Sum of <w(tau), w(tau)>: {criterion:.2f}")
         #if np.sum([utils.norm(w[tau]) for tau in range(k+1)]) <= eps_2:
         if criterion <= eps_2:
             return alpha
