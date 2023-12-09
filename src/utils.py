@@ -3,6 +3,7 @@ from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from functools import partial
+import json
 
 def inner(x: NDArray, y: NDArray):
     """Inner product of paths or vector fields x and y, both of which have shape (T+1, n).
@@ -67,3 +68,18 @@ def plot_path_animation(path, convert_from_SRV=False, interval=50, title=None):
     ax.set(xlim=[np.min(path[:,:,0]), np.max(path[:,:,0])], ylim=[np.min(path[:,:,1]), np.max(path[:,:,1])])
     ani = animation.FuncAnimation(fig=fig, func=partial(animation_update, line=line, path=path), frames=len(path), interval=interval)
     plt.show()
+
+def load_path(filename: str, discretization_steps: int = 100):
+    f = open(filename, 'r')
+    points = np.array(json.load(f))
+    f.close()
+    ret = np.zeros((discretization_steps, points.shape[1]))
+    for i in range(discretization_steps):
+        pos = i/(discretization_steps-1)*(len(points)-1)
+        index = int(pos)
+        frac = pos-index
+        if index < len(points)-1:
+            ret[i] = points[index] + frac*(points[index+1] - points[index])
+        else:
+            ret[i] = points[index]
+    return ret
