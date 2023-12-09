@@ -28,7 +28,7 @@ def main():
     plt.show()
     path_srv = path_straightening(ellipse, circle, k)
     path = np.array([utils.SRV_to_orig(path_srv[i]) for i in range(path_srv.shape[0])])
-    utils.plot_path_animation(path)
+    utils.plot_path_animation(path, title="Straightened path")
 
 if __name__ == "__main__":
     main()
