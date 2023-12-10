@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="61.820057mm"
+   height="61.626831mm"
+   viewBox="0 0 61.820057 61.626831"
+   version="1.1"
+   id="svg1908"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="heart.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1910"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.73049944"
+     inkscape:cx="133.47033"
+     inkscape:cy="348.39178"
+     inkscape:window-width="1850"
+     inkscape:window-height="1009"
+     inkscape:window-x="70"
+     inkscape:window-y="34"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <defs
+     id="defs1905" />
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-69.401214,-55.59555)">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 99.883615,78.196156 C 104.4357,71.223607 110.42875,55.771113 121.07466,57.74565 c 2.79776,0.518909 6.00984,1.497436 8.03061,3.518205 7.85643,7.856423 -9.81793,40.834905 -15.08645,47.373605 -2.8391,3.52357 -7.95347,5.45751 -10.74298,8.24702 -1.59967,1.59967 -10.657784,-6.57796 -12.352242,-8.69412 -3.334784,-4.16471 -7.8458,-7.97205 -12.124385,-11.265816 -9.030817,-6.952154 -9.265708,-20.435408 -9.265708,-30.601499 0,-4.79144 0.479374,-9.208849 5.10409,-10.334442 7.811063,-1.901105 15.19765,7.039419 19.10725,12.391554 1.1591,1.586775 0.955104,3.778744 2.137071,4.98372 0.386848,0.394375 2.09754,5.32329 2.42868,5.280655 0.54076,-0.06962 1.048681,-0.298918 1.573019,-0.448376 z"
+       id="path1951" />
+  </g>
+</svg>
