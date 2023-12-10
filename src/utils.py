@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 from matplotlib import animation
+from mpl_toolkits import mplot3d
 from functools import partial
 import json
 
@@ -55,24 +56,47 @@ def SRV_to_orig(q: NDArray, beta0: NDArray = None) -> NDArray:
     return beta
 
 def plot(q, title=None):
-    plt.plot(q[:, 0], q[:, 1])
+    dim = q.shape[1]
+    if dim < 2 or dim > 3:
+        return
+    fig = plt.figure()
+    if dim == 2:
+        ax = fig.add_subplot()
+        ax.plot(q[:, 0], q[:, 1])
+    elif dim == 3:
+        ax = fig.add_subplot(projection='3d')
+        ax.plot3D(q[:, 0], q[:, 1], q[:, 2])
     if title is not None:
-        plt.title(title)
+        ax.set_title(title)
     plt.show()
 
 def animation_update(frame, line, path):
-    line.set_xdata(path[frame, :, 0])
-    line.set_ydata(path[frame, :, 1])
+    dim = path.shape[2]
+    if dim == 2:
+        line.set_xdata(path[frame, :, 0])
+        line.set_ydata(path[frame, :, 1])
+    else:
+        line.set_data_3d(path[frame, :, 0], path[frame, :, 1], path[frame, :, 2])
     return line
 
 def plot_path_animation(path, convert_from_SRV=False, interval=50, title=None):
+    dim = path.shape[2]
+    if dim < 2:
+        return
     if convert_from_SRV:
         path = np.array([SRV_to_orig(curve) for curve in path])
-    fig, ax = plt.subplots()
+    fig = plt.figure()
+    if dim == 2:
+        ax = fig.add_subplot()
+        line = ax.plot(path[0, :, 0], path[0, :, 1])[0]
+    else:
+        ax = fig.add_subplot(projection='3d')
+        line = ax.plot3D(path[0, :, 0], path[0, :, 1], path[0, :, 2])[0]
     if title is not None:
         ax.set_title(title)
-    line = ax.plot(path[0, :, 0], path[0, :, 1])[0]
     ax.set(xlim=[np.min(path[:,:,0]), np.max(path[:,:,0])], ylim=[np.min(path[:,:,1]), np.max(path[:,:,1])])
+    if dim >= 3:
+        ax.set_zlim(np.min(path[:,:,2]), np.max(path[:,:,2]))
     ani = animation.FuncAnimation(fig=fig, func=partial(animation_update, line=line, path=path), frames=len(path), interval=interval)
     plt.show()
 

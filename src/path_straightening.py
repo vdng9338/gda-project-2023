@@ -113,7 +113,7 @@ def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-1, iter_num: in
 def energy(der_alpha: NDArray) -> float:
     return np.tensordot(der_alpha, der_alpha, 3) / der_alpha.shape[0] / der_alpha.shape[1] / 2
 
-def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-6):
+def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-2):
     q_0 = utils.SRV(beta_0)
     q_1 = utils.SRV(beta_1)
     q_0 /= utils.norm(q_0)
