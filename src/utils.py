@@ -79,12 +79,17 @@ def animation_update(frame, line, path):
         line.set_data_3d(path[frame, :, 0], path[frame, :, 1], path[frame, :, 2])
     return line
 
-def plot_path_animation(path, convert_from_SRV=False, interval=50, title=None):
+def plot_path_animation(path, convert_from_SRV=False, interval=50, num_images=-1, title=None):
     dim = path.shape[2]
     if dim < 2:
         return
     if convert_from_SRV:
         path = np.array([SRV_to_orig(curve) for curve in path])
+    if num_images > 1:
+        newpath = np.zeros((num_images, path.shape[1], dim))
+        for i in range(num_images):
+            newpath[i] = path[int(i*(len(path)-1)/(num_images-1))]
+        path = newpath
     fig = plt.figure()
     if dim == 2:
         ax = fig.add_subplot()
@@ -99,6 +104,36 @@ def plot_path_animation(path, convert_from_SRV=False, interval=50, title=None):
         ax.set_zlim(np.min(path[:,:,2]), np.max(path[:,:,2]))
     ani = animation.FuncAnimation(fig=fig, func=partial(animation_update, line=line, path=path), frames=len(path), interval=interval)
     plt.show()
+
+def plot_save_path(path, filename, convert_from_SRV=False, num_images=6, figsize=(1.5, 1)):
+    dim = path.shape[2]
+    if dim < 2 or num_images < 2:
+        return
+    if convert_from_SRV:
+        path = np.array([SRV_to_orig(curve) for curve in path])
+    newpath = np.zeros((num_images, path.shape[1], dim))
+    for i in range(num_images):
+        newpath[i] = path[int(i*(len(path)-1)/(num_images-1))]
+    path = newpath
+    lims = [[np.min(path[:, :, d]), np.max(path[:, :, d])] for d in range(min(3, dim))]
+    fig = plt.figure(figsize=(num_images*figsize[0], figsize[1]))
+    for i in range(num_images):
+        if dim >= 3:
+            ax = fig.add_subplot(1, num_images, i+1, projection='3d')
+            ax.plot3D(path[i, :, 0], path[i, :, 1], path[i, :, 2])
+            ax.dist = 7
+        else:
+            ax = fig.add_subplot(1, num_images, i+1)
+            ax.plot(path[i, :, 0], path[i, :, 1])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set(xlim=lims[0], ylim=lims[1])
+        if dim >= 3:
+            ax.set_zticks([])
+            ax.set_zlim(lims[2])
+    fig.subplots_adjust(wspace=0.0, hspace=0.0)
+    plt.savefig(filename, bbox_inches='tight', pad_inches=0.0)
+    plt.close('all')
 
 def load_path(filename: str, discretization_steps: int = 100):
     f = open(filename, 'r')

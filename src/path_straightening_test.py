@@ -73,6 +73,7 @@ def main():
     path_srv = path_straightening(shape1, shape2, k)
     path = np.array([utils.SRV_to_orig(path_srv[i]) for i in range(path_srv.shape[0])])
     utils.plot_path_animation(path, title="Straightened path")
+    utils.plot_save_path(path, "straightened_path.pdf")
 
 if __name__ == "__main__":
     main()

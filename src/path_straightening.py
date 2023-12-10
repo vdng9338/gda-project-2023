@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 import utils
+from matplotlib import pyplot as plt
 
 def proj_Co(q: NDArray):
     return q/utils.norm(q)
@@ -113,7 +114,7 @@ def gradient_descent(alpha: NDArray, w: NDArray, eps: float = 1e-1, iter_num: in
 def energy(der_alpha: NDArray) -> float:
     return np.tensordot(der_alpha, der_alpha, 3) / der_alpha.shape[0] / der_alpha.shape[1] / 2
 
-def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-2):
+def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-4):
     q_0 = utils.SRV(beta_0)
     q_1 = utils.SRV(beta_1)
     q_0 /= utils.norm(q_0)
@@ -124,22 +125,34 @@ def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-2):
     taus = 4*taus**2 - 3*taus # a polynomial P of degree two such that P(0)=0, P(1)=1, P(1/4)=-1/2
     alpha = 1/np.sin(theta)*(np.sin(theta*(1-taus)) * q_0 + np.sin(theta*taus) * q_1)
     utils.plot_path_animation(alpha, True, title="Path in $\mathcal{C}^o$")
+    utils.plot_save_path(alpha, "path_Co.pdf", True)
     for tau in range(k+1):
         alpha[tau] = proj_Cc(alpha[tau])
     utils.plot_path_animation(alpha, True, title="Path in $\mathcal{C}^c$")
+    utils.plot_save_path(alpha, "path_Cc_init.pdf", True)
     num_iterations = 0
+    energies = []
+    criteria = []
     while True:
         der_alpha = differentiate_path(alpha)
         u = covariant_integral(der_alpha, alpha)
         tilde_u = backward_parallel_transport(u, alpha)
         w = grad_E_H0(u, tilde_u)
         gradient_descent(alpha, w, iter_num=num_iterations)
-        if num_iterations % 100 == 1:
-            utils.plot_path_animation(alpha, True, title=f"Iteration #{num_iterations}")
         num_iterations+=1
         criterion = np.tensordot(w, w, 3)/w.shape[0]/w.shape[1]
+        energ = energy(der_alpha)
+        criteria.append(criterion)
+        energies.append(energ)
+        if num_iterations % 100 == 0:
+            utils.plot_save_path(alpha, f"iter_{num_iterations}.pdf", True)
+            utils.plot_path_animation(alpha, True, title=f"Iteration #{num_iterations}")
+            plt.plot(energies, label='Energy')
+            #plt.plot(criteria, label='Stopping criterion')
+            plt.xlabel('Iteration')
+            plt.ylabel('Energy')
+            plt.show()
         if num_iterations == 1 or not(num_iterations % 10):
-            energ = energy(der_alpha)
             print(f"Iter: {num_iterations}")
             print(f"Energy: {energ:.5f}")
             print(f"Sum of <w(tau), w(tau)>: {criterion:.5f}")
