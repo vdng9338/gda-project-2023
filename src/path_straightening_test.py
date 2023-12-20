@@ -62,12 +62,12 @@ def main():
     fig = plt.figure()
     if dim == 2:
         ax = fig.add_subplot()
-        ax.plot(shape1[:,0], shape1[:,1])
-        ax.plot(shape2[:,0], shape2[:,1])
+        ax.scatter(shape1[:,0], shape1[:,1], marker='+')
+        ax.scatter(shape2[:,0], shape2[:,1], marker='+')
     else:
         ax = fig.add_subplot(projection='3d')
-        ax.plot3D(shape1[:,0], shape1[:,1], shape1[:,2])
-        ax.plot3D(shape2[:,0], shape2[:,1], shape2[:,2])
+        ax.scatter(shape1[:,0], shape1[:,1], shape1[:,2], marker='+')
+        ax.scatter(shape2[:,0], shape2[:,1], shape2[:,2], marker='+')
     ax.set_aspect('equal', adjustable='datalim')
     plt.show()
     path_srv = path_straightening(shape1, shape2, k)

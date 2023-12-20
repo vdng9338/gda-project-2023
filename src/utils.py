@@ -62,22 +62,25 @@ def plot(q, title=None):
     fig = plt.figure()
     if dim == 2:
         ax = fig.add_subplot()
-        ax.plot(q[:, 0], q[:, 1])
+        ax.scatter(q[:, 0], q[:, 1])
     elif dim == 3:
         ax = fig.add_subplot(projection='3d')
-        ax.plot3D(q[:, 0], q[:, 1], q[:, 2])
+        ax.scatter(q[:, 0], q[:, 1], q[:, 2])
     if title is not None:
         ax.set_title(title)
     plt.show()
 
-def animation_update(frame, line, path):
+def animation_update(frame, scat, path):
     dim = path.shape[2]
     if dim == 2:
-        line.set_xdata(path[frame, :, 0])
-        line.set_ydata(path[frame, :, 1])
+        """line.set_xdata(path[frame, :, 0])
+        line.set_ydata(path[frame, :, 1])"""
+        scat.set_offsets(path[frame])
     else:
-        line.set_data_3d(path[frame, :, 0], path[frame, :, 1], path[frame, :, 2])
-    return line
+        #line.set_data_3d(path[frame, :, 0], path[frame, :, 1], path[frame, :, 2])
+        scat.set_offsets(path[frame,:,0:2])
+        scat.set_3d_properties(path[frame,:,2], 'z')
+    return scat
 
 def plot_path_animation(path, convert_from_SRV=False, interval=50, num_images=-1, title=None):
     dim = path.shape[2]
@@ -93,16 +96,16 @@ def plot_path_animation(path, convert_from_SRV=False, interval=50, num_images=-1
     fig = plt.figure()
     if dim == 2:
         ax = fig.add_subplot()
-        line = ax.plot(path[0, :, 0], path[0, :, 1])[0]
+        scat = ax.scatter(path[0, :, 0], path[0, :, 1], marker='+')
     else:
         ax = fig.add_subplot(projection='3d')
-        line = ax.plot3D(path[0, :, 0], path[0, :, 1], path[0, :, 2])[0]
+        scat = ax.scatter(path[0, :, 0], path[0, :, 1], path[0, :, 2], marker='+')
     if title is not None:
         ax.set_title(title)
     ax.set(xlim=[np.min(path[:,:,0]), np.max(path[:,:,0])], ylim=[np.min(path[:,:,1]), np.max(path[:,:,1])])
     if dim >= 3:
         ax.set_zlim(np.min(path[:,:,2]), np.max(path[:,:,2]))
-    ani = animation.FuncAnimation(fig=fig, func=partial(animation_update, line=line, path=path), frames=len(path), interval=interval)
+    ani = animation.FuncAnimation(fig=fig, func=partial(animation_update, scat=scat, path=path), frames=len(path), interval=interval)
     plt.show()
 
 def plot_save_path(path, filename, convert_from_SRV=False, num_images=6, figsize=(1.5, 1)):
@@ -120,11 +123,11 @@ def plot_save_path(path, filename, convert_from_SRV=False, num_images=6, figsize
     for i in range(num_images):
         if dim >= 3:
             ax = fig.add_subplot(1, num_images, i+1, projection='3d')
-            ax.plot3D(path[i, :, 0], path[i, :, 1], path[i, :, 2])
+            ax.scatter(path[i, :, 0], path[i, :, 1], path[i, :, 2], marker='+')
             ax.dist = 7
         else:
             ax = fig.add_subplot(1, num_images, i+1)
-            ax.plot(path[i, :, 0], path[i, :, 1])
+            ax.scatter(path[i, :, 0], path[i, :, 1], marker='+')
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set(xlim=lims[0], ylim=lims[1])

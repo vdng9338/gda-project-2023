@@ -122,7 +122,7 @@ def path_straightening(beta_0, beta_1, k: int, eps_2: float = 1e-4):
     theta = np.arccos(utils.inner(q_0, q_1))
     taus = np.linspace(0.0, 1.0, k+1)[:,np.newaxis,np.newaxis]
     # Start with a wildly suboptimal path to show the effects of path straightening
-    taus = 4*taus**2 - 3*taus # a polynomial P of degree two such that P(0)=0, P(1)=1, P(1/4)=-1/2
+    #taus = 4*taus**2 - 3*taus # a polynomial P of degree two such that P(0)=0, P(1)=1, P(1/4)=-1/2
     alpha = 1/np.sin(theta)*(np.sin(theta*(1-taus)) * q_0 + np.sin(theta*taus) * q_1)
     utils.plot_path_animation(alpha, True, title="Path in $\mathcal{C}^o$")
     utils.plot_save_path(alpha, "path_Co.pdf", True)
